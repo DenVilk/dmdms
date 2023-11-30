@@ -89,3 +89,28 @@ EXECUTE FUNCTION create_email_template_on_stage_creation();
 
 
 insert into olympiad (name, is_opened_registration, type) VALUES ('BITCAP', false, 'IOI');
+
+CREATE OR REPLACE FUNCTION check_team_status_on_participant_update()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF (SELECT status FROM team WHERE id = NEW.team_id) = 'not done' THEN
+    RETURN NEW;
+  ELSE
+    RAISE EXCEPTION 'Нельзя изменить данные участника, так как статус команды не равен "not done".';
+  END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER check_team_status_trigger
+BEFORE UPDATE ON participant
+FOR EACH ROW
+EXECUTE FUNCTION check_team_status_on_participant_update();
+
+
+update team
+set status = 'pending'
+where name='Abobus';
+
+update participant
+set firstname = 'Vladimir'
+where id=15;
